@@ -1,0 +1,7 @@
+git+https://github.com/OperavonderVollmer/OperaPowerRelay.git
+pywin32 
+psutil
+pillow
+pystray
+winotify
+
