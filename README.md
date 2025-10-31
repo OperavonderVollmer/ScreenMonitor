@@ -1,4 +1,4 @@
-# HeadMade
+# ScreenMonitor
 
 **HeadMade** dutifully sorts folders for you based on pre-written rules on a time based interval
 
