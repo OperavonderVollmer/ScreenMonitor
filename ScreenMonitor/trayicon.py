@@ -5,14 +5,14 @@ import os
 import threading
 import time
 import sys
-from ScreenMonitor.DataClasses import Mister_Monitor
+from typing import Callable
 import datetime
 
 SCRIPT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico")
 ICON = Image.open(SCRIPT_PATH)
 STOP_SIGNAL = threading.Event()
 ICON_THREAD = None
-STOP: callable = None
+STOP: Callable = None # pyright: ignore[reportAssignmentType]
 FILEPATH: str = ""
 
 def stop_icon() -> None:
@@ -23,7 +23,7 @@ def stop_icon() -> None:
     time.sleep(0.5)
     STOP()
 
-def icon_thread(monitor: Mister_Monitor) -> None:
+def icon_thread(monitor) -> None:
     last_app = None
     last_elapsed = None
 
@@ -61,7 +61,7 @@ def icon_thread(monitor: Mister_Monitor) -> None:
     i.stop()
     sys.exit(0)
 
-def start_icon(callback: callable, data, filepath: str) -> None:
+def start_icon(callback: Callable, data, filepath: str) -> None:
     global ICON_THREAD
     global STOP
     global FILEPATH

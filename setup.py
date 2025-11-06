@@ -10,6 +10,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "OperaPowerRelay @ git+https://github.com/OperavonderVollmer/OperaPowerRelay.git",
+        "PluginTemplate @ git+https://github.com/OperavonderVollmer/PluginTemplate.git",
         "pywin32",
         "psutil",
         "pillow",

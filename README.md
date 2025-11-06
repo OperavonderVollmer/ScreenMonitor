@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # ScreenMonitor
 
 **HeadMade** dutifully sorts folders for you based on pre-written rules on a time based interval
@@ -48,3 +49,6 @@ Run HeadMade.bat to open the script
 1. Select between Interval based or Schedule based configuration
 2. Provide a time in HH:MM:SS military time format
 3. HeadMade will either perform its every HH:MM:SS (interval) throughout a day or every HH:MM:SS once a day (schedule)
+=======
+# ScreenMonitor
+>>>>>>> Stashed changes

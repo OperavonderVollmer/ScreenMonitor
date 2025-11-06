@@ -1,1 +1,8 @@
+<<<<<<< Updated upstream
 *.pyc
+=======
+/ScreenMonitor/__pycache__
+/ScreenMonitor/__pycache__
+>>>>>>> Stashed changes
+start.bat
+start.bat
