@@ -1,16 +1,22 @@
 from PluginTemplate import PluginTemplate
-from ScreenMonitor import ScreenMonitor, DataClasses, trayicon
+from ScreenMonitor import DataClasses, ScreenMonitor
 from OperaPowerRelay import opr
 import threading 
 import queue
 import datetime
 from typing import Iterator
+from TrayIcon import TrayIcon
+import os
+import pystray
 
 class plugin(PluginTemplate.ophelia_plugin):
     def __init__(self):
         super().__init__(
             name="ScreenMonitor",
-            commands=["START", "ADVANCED START", "STOP", "SUMMARY", "OPEN REPORT", "OPEN DIRECTORY",],
+            command_map={
+                "START": self.handle_start("START"),
+                "ADVANCED": self.handle_start("ADVANCED"),
+            },
             git_repo="https://github.com/OperavonderVollmer/ScreenMonitor.git",
         )
         
@@ -21,9 +27,45 @@ class plugin(PluginTemplate.ophelia_plugin):
         self._data_queue: queue.Queue = queue.Queue(maxsize=1)
         self.processed_message: str = "Nothing to report."
         self._icon_flag: bool = False
+        self.tray_icon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=self.menu_callback, closing_callback=self.icon_stop)
 
         self._screen_monitor = DataClasses.Mister_Monitor(interval=15, list_current_applications=ScreenMonitor.list_current_applications, stop_signal=self._running, file_dir=ScreenMonitor.FILEDIR)
 
+    def handle_start(self, command: str):    
+        if self._running_operations == "START" or self._running_operations == "ADVANCED":
+            opr.print_from(name=self._meta["name"], message="Already running")
+            return
+        self.icon_start()
+
+        if command.upper() == "ADVANCED":
+            self._data_thread = threading.Thread(target=self.generate_data, daemon=True)
+            self._data_thread.start()
+            self._running_operations = "ADVANCED"
+        else:
+            self._screen_monitor.start()
+            self._running_operations = "START"
+            return
+
+    def handle_stop(self):
+        if self._running_operations == "STOP":
+            return
+        self.tray_icon.stop_icon()
+        self._screen_monitor.stop()
+        self._running_operations = "STOP"
+
+    def menu_callback(self):
+        
+        menu = pystray.Menu(
+            pystray.MenuItem("Screen Monitor", None, enabled=False),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(self._screen_monitor.get_active_application(), None, enabled=False),
+            pystray.MenuItem(self._screen_monitor.get_elapsed_time(), None, enabled=False),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Get full report", self._screen_monitor.open_report),
+            pystray.MenuItem("Open log folder", self._screen_monitor.open_directory),
+            pystray.MenuItem("Exit", self.icon_stop),
+        )
+        return self._screen_monitor.get_active_application(), menu
 
     def stream_data(self) -> Iterator:
 
@@ -142,21 +184,6 @@ class plugin(PluginTemplate.ophelia_plugin):
             elif c.upper() == "DIRECTORY":
                 self._screen_monitor.open_directory()
         
-    def icon_start(self):
-        if self._icon_flag:
-            return
-        
-        self._icon_flag = True
-        print("Starting tray icon...")
-        trayicon.start_icon(callback=self.clean_up, data=self._screen_monitor, filepath=ScreenMonitor.FILEDIR)
-    
-    def icon_stop(self):
-        if not self._icon_flag:
-            return
-        
-        self._icon_flag = False
-        print("Stopping tray icon...")
-        trayicon.stop_icon()
 
 
     def get_operation(self) -> str:
@@ -184,19 +211,19 @@ class plugin(PluginTemplate.ophelia_plugin):
             comm = "DIRECTORY"
         else:
             opr.print_from(name=self._meta["name"], message=f"Invalid input: {clean_answer}")
-        return comm
+
+        
             
 
     def execute(self):
-        self.handle_commands(self.get_operation())
+        # self.handle_commands(self.get_operation())
+        return self.run_command()
 
     def direct_execute(self, *args, **kwargs):
         return super().direct_execute(*args, **kwargs)
     
-    def clean_up(self, *args, **kwargs):
-        
-        
-        self.handle_commands("STOP")
+    def clean_up(self, *args, **kwargs):     
+        self.handle_stop()
 
 def get_plugin(): return plugin()
 
