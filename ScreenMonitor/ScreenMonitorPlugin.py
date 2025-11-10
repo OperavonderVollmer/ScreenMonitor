@@ -3,7 +3,7 @@ import os, sys
 plugin_folder = os.path.dirname(os.path.abspath(__file__))
 if plugin_folder not in sys.path:
     sys.path.insert(0, plugin_folder)
-from ScreenMonitor import DataClasses, ScreenMonitor
+from ScreenMonitor import DataClasses, ScreenMonitorMain
 from OperaPowerRelay import opr
 import threading 
 import queue
@@ -21,7 +21,7 @@ class plugin(PluginTemplate.ophelia_plugin):
         self._data_queue: queue.Queue = queue.Queue(maxsize=1)
         self.processed_message: str = "Nothing to report."
         self._icon_flag: bool = False        
-        self._screen_monitor = DataClasses.Mister_Monitor(interval=15, list_current_applications=ScreenMonitor.list_current_applications, stop_signal=self._running, file_dir=ScreenMonitor.FILEDIR)
+        self._screen_monitor = DataClasses.Mister_Monitor(interval=15, list_current_applications=ScreenMonitorMain.list_current_applications, stop_signal=self._running, file_dir=ScreenMonitorMain.FILEDIR)
         self.tray_icon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=self._screen_monitor.menu_callback, closing_callback=self.handle_stop)
 
 

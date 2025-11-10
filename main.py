@@ -1,6 +1,6 @@
-from ScreenMonitor import ScreenMonitor
+from ScreenMonitor import ScreenMonitorMain
 
 
 
 if __name__ == "__main__":
-    ScreenMonitor.main()
+    ScreenMonitorMain.main()
