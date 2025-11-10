@@ -1,4 +1,8 @@
 from PluginTemplate import PluginTemplate
+import os, sys
+plugin_folder = os.path.dirname(os.path.abspath(__file__))
+if plugin_folder not in sys.path:
+    sys.path.insert(0, plugin_folder)
 from ScreenMonitor import DataClasses, ScreenMonitor
 from OperaPowerRelay import opr
 import threading 
@@ -7,8 +11,6 @@ import datetime
 from typing import Iterator
 from TrayIcon import TrayIcon
 import os
-import pystray
-
 class plugin(PluginTemplate.ophelia_plugin):
     def __init__(self):
 
