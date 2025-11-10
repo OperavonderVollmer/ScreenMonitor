@@ -3,11 +3,7 @@ import os
 from abc import ABC
 import threading
 import datetime
-import win32gui
-import win32process
-import psutil
-import time
-from ScreenMonitor import trayicon
+import pystray
 from typing import Iterator
 class Application_Info:
     def __init__(self, name: str, exe_name: str, process_id: int, is_focused: bool) -> None:
@@ -121,7 +117,6 @@ class Mister_Monitor:
         self._list_current_applications = list_current_applications
         self._stop_signal = stop_signal
         self._file_dir = file_dir
-        
 
     def save_log(self, snapped_time: datetime.datetime, manual: bool = True) -> None:
         if not manual:
@@ -297,7 +292,16 @@ class Mister_Monitor:
         return f"Elapsed: {str(datetime.datetime.now() - self._start_time).split('.')[0] or 'None'}"
     
 
-
-
-
+    def menu_callback(self):
+        
+        menu = pystray.Menu(
+            pystray.MenuItem("Screen Monitor", None, enabled=False),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem(self.get_active_application(), None, enabled=False),
+            pystray.MenuItem(self.get_elapsed_time(), None, enabled=False),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Get full report", self.open_report),
+            pystray.MenuItem("Open log folder", self.open_directory),
+        )
+        return self.get_active_application(), menu
     

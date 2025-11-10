@@ -16,7 +16,8 @@ import win32gui
 import win32process
 import psutil
 import time
-from ScreenMonitor import trayicon, DataClasses as dc
+from ScreenMonitor import DataClasses as dc
+from TrayIcon import TrayIcon
 import winotify
 import os
 import psutil
@@ -254,7 +255,9 @@ def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None 
     
     MONITOR = dc.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
     MONITOR.start()
-    trayicon.start_icon(callback=stop, data=MONITOR, filepath=FILEDIR)
+    
+    trayicon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=MONITOR.menu_callback, closing_callback=stop)
+    trayicon.start_icon()
     send_toast_notification(message="Now tracking application usage in the background.")
     while not STOP_SIGNAL.is_set():
         try:

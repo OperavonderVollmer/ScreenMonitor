@@ -11,61 +11,61 @@ import pystray
 
 class plugin(PluginTemplate.ophelia_plugin):
     def __init__(self):
-        super().__init__(
-            name="ScreenMonitor",
-            command_map={
-                "START": self.handle_start("START"),
-                "ADVANCED": self.handle_start("ADVANCED"),
-            },
-            git_repo="https://github.com/OperavonderVollmer/ScreenMonitor.git",
-        )
-        
+
         self._data_thread: threading.Thread = None # pyright: ignore[reportAttributeAccessIssue]
         self._running = threading.Event()
         self._running_operations: str = "STOP"
         self._past_data: list[str] = []
         self._data_queue: queue.Queue = queue.Queue(maxsize=1)
         self.processed_message: str = "Nothing to report."
-        self._icon_flag: bool = False
-        self.tray_icon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=self.menu_callback, closing_callback=self.icon_stop)
-
+        self._icon_flag: bool = False        
         self._screen_monitor = DataClasses.Mister_Monitor(interval=15, list_current_applications=ScreenMonitor.list_current_applications, stop_signal=self._running, file_dir=ScreenMonitor.FILEDIR)
+        self.tray_icon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=self._screen_monitor.menu_callback, closing_callback=self.handle_stop)
 
-    def handle_start(self, command: str):    
+
+
+
+        super().__init__(
+            name="ScreenMonitor",
+            command_map={
+                "START": self.handle_start,
+                "ADVANCED": self.handle_adv,
+                "STOP": self.handle_stop,
+                "REPORT": self._screen_monitor.open_report,
+                "DIRECTORY": self._screen_monitor.open_directory,
+            },
+            git_repo="https://github.com/OperavonderVollmer/ScreenMonitor.git",
+        )
+        
+        
+    def handle_start(self):    
         if self._running_operations == "START" or self._running_operations == "ADVANCED":
             opr.print_from(name=self._meta["name"], message="Already running")
             return
-        self.icon_start()
-
-        if command.upper() == "ADVANCED":
-            self._data_thread = threading.Thread(target=self.generate_data, daemon=True)
-            self._data_thread.start()
-            self._running_operations = "ADVANCED"
-        else:
-            self._screen_monitor.start()
-            self._running_operations = "START"
+        
+        self._screen_monitor.start()
+        self._running_operations = "START"
+        self.tray_icon.start_icon()
+        return
+    
+    def handle_adv(self):
+        if self._running_operations == "START" or self._running_operations == "ADVANCED":
+            opr.print_from(name=self._meta["name"], message="Already running")
             return
+        
+        self._data_thread = threading.Thread(target=self.generate_data, daemon=True)
+        self._data_thread.start()
+        self._running_operations = "ADVANCED"
+        self.tray_icon.start_icon()
+        return
 
     def handle_stop(self):
         if self._running_operations == "STOP":
             return
-        self.tray_icon.stop_icon()
         self._screen_monitor.stop()
         self._running_operations = "STOP"
-
-    def menu_callback(self):
-        
-        menu = pystray.Menu(
-            pystray.MenuItem("Screen Monitor", None, enabled=False),
-            pystray.Menu.SEPARATOR,
-            pystray.MenuItem(self._screen_monitor.get_active_application(), None, enabled=False),
-            pystray.MenuItem(self._screen_monitor.get_elapsed_time(), None, enabled=False),
-            pystray.Menu.SEPARATOR,
-            pystray.MenuItem("Get full report", self._screen_monitor.open_report),
-            pystray.MenuItem("Open log folder", self._screen_monitor.open_directory),
-            pystray.MenuItem("Exit", self.icon_stop),
-        )
-        return self._screen_monitor.get_active_application(), menu
+        if not self.tray_icon._stop_signal.is_set():
+            self.tray_icon.stop_icon()
 
     def stream_data(self) -> Iterator:
 
@@ -139,85 +139,11 @@ class plugin(PluginTemplate.ophelia_plugin):
             
         self._running.clear()
 
-    def handle_commands(self, command: str):
-        
-        for c in command.split(" "):
-
-            if c.upper() == "START" or c.upper() == "ADVANCED":
-                if self._running_operations == "START" or self._running_operations == "ADVANCED":
-                    opr.print_from(name=self._meta["name"], message="Already running")
-                    return
-                self.icon_start()
-
-                if c.upper() == "ADVANCED":
-                    self._data_thread = threading.Thread(target=self.generate_data, daemon=True)
-                    self._data_thread.start()
-                    self._running_operations = "ADVANCED"
-                else:
-                    self._screen_monitor.start()
-                    self._running_operations = "START"
-                    return
-            elif c.upper() == "STOP":
-                if self._running_operations == "STOP":
-                    return
-                
-                if self._icon_flag:
-                    self.icon_stop()
-                    self._icon_flag = False
-                    self._screen_monitor.save_log(datetime.datetime.now(), manual=True)
-
-                if self._running_operations == "START":
-                    self._screen_monitor.stop()
-
-                elif self._running_operations == "ADVANCED":
-                    self._running.clear()
-                    if self._data_thread and self._data_thread.is_alive():
-                        self._data_thread.join(timeout=2)
-                        
-            elif c.upper() == "SUMMARY":
-                opr.print_from(name=self._meta["name"], message=self.processed_message)
-            elif c.upper() == "REPORT":
-                try:
-                    self._screen_monitor.open_report()
-                except IndexError:
-                    opr.print_from(name=self._meta["name"], message="No data to report")
-            elif c.upper() == "DIRECTORY":
-                self._screen_monitor.open_directory()
-        
-
-
-    def get_operation(self) -> str:
-        opr.list_choices(choices=self._meta["commands"], title=self._meta["name"], after_return_count=1)
-        # answer = opr.input_timed_r(name=self._meta["name"], message="Select an option (Autostart in 10 seconds)", wait_time=10)
-        answer = opr.input_from(name=self._meta["name"], message="Select an option")
-        clean_answer, log_message = opr.sanitize_text(answer or "")
-
-        if log_message:
-            opr.print_from(name=self._meta["name"], message=log_message)
-            return ""
-
-        comm = ""
-        if not clean_answer or clean_answer == "1":
-            comm = "START"
-        elif clean_answer == "2":
-            comm = "ADVANCED"
-        elif clean_answer == "3":
-            comm = "STOP"
-        elif clean_answer == "4":
-            comm = "SUMMARY"
-        elif clean_answer == "5":
-            comm = "REPORT"
-        elif clean_answer == "6":
-            comm = "DIRECTORY"
-        else:
-            opr.print_from(name=self._meta["name"], message=f"Invalid input: {clean_answer}")
-
-        
-            
+   
 
     def execute(self):
         # self.handle_commands(self.get_operation())
-        return self.run_command()
+        return super().run_command()
 
     def direct_execute(self, *args, **kwargs):
         return super().direct_execute(*args, **kwargs)
