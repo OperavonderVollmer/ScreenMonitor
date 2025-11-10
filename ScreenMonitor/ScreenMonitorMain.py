@@ -16,7 +16,7 @@ import win32gui
 import win32process
 import psutil
 import time
-from ScreenMonitor import DataClasses as dc
+from . import DataClasses
 from TrayIcon import TrayIcon
 import winotify
 import os
@@ -38,7 +38,7 @@ def send_toast_notification(message: str) -> None:
     toast.add_actions(label="Open Logs", launch=FILEDIR)
     toast.show()
 
-def list_current_applications() -> tuple[bool, list[dc.Application_Info]]:
+def list_current_applications() -> tuple[bool, list[DataClasses.Application_Info]]:
 
     if PLATFORM == "Windows":
         return True, windows_get_applications()
@@ -88,8 +88,8 @@ def list_current_applications() -> tuple[bool, list[dc.Application_Info]]:
 
     win32gui.EnumWindows(_window_callback, [active_hwnd, res])
 
-    results: list[dc.Application_Info] = [
-        dc.Application_Info(name=name, exe_name=exe_name, process_id = process_id, is_focused=is_active) for name, exe_name, process_id, is_active in res
+    results: list[DataClasses.Application_Info] = [
+        DataClasses.Application_Info(name=name, exe_name=exe_name, process_id = process_id, is_focused=is_active) for name, exe_name, process_id, is_active in res
     ]
     return results
 
@@ -180,7 +180,7 @@ def _window_callback(hwnd, context):
         )
 
 
-def windows_get_applications() -> list[dc.Application_Info]:
+def windows_get_applications() -> list[DataClasses.Application_Info]:
     """Return only applications equivalent to Task Manager’s 'Apps' section."""
     active_hwnd = win32gui.GetForegroundWindow()
     results: list[tuple[str, str, int, bool]] = []
@@ -188,7 +188,7 @@ def windows_get_applications() -> list[dc.Application_Info]:
     win32gui.EnumWindows(_window_callback, [active_hwnd, results])
 
     return [
-        dc.Application_Info(
+        DataClasses.Application_Info(
             name=title,
             exe_name=exe_name,
             process_id=pid,
@@ -202,7 +202,7 @@ INTERVAL: int = 0
 FILEDIR: str = os.path.join(opr.get_special_folder_path("Documents"), "Opera Tools")
 IS_MODULE: bool = False
 PLATFORM: str = "Windows"
-MONITOR: dc.Mister_Monitor | None = None
+MONITOR: DataClasses.Mister_Monitor | None = None
 STOP_SIGNAL = threading.Event()
 
 def stop() -> None:
@@ -214,7 +214,7 @@ def stop() -> None:
 
 
 
-def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None | dc.Mister_Monitor:
+def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None | DataClasses.Mister_Monitor:
     """
     Parameters
     ===========
@@ -251,9 +251,9 @@ def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None 
     PLATFORM = platform.system()
 
     if is_module:
-        return dc.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
+        return DataClasses.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
     
-    MONITOR = dc.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
+    MONITOR = DataClasses.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
     MONITOR.start()
     
     trayicon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=MONITOR.menu_callback, closing_callback=stop)
