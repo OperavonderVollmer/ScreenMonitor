@@ -164,12 +164,6 @@ import sys
 def accomodate_ophelia(port):
     import socket, time, pickle
 
-    error_count = 5
-    while error_count > 0:
-        opr.print_from(name="ScreenMonitor", message=f"Sending in {error_count} seconds...")
-        time.sleep(1)
-        error_count -= 1
-    
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         for attempt in range(5):
             try:
@@ -185,7 +179,7 @@ def accomodate_ophelia(port):
 
         sock.sendall(("PING").encode("utf-8"))
         reply = sock.recv(1024)
-        if reply.decode("utf-8") == b"PONG":
+        if reply.decode("utf-8") == "PONG":
             opr.print_from(name="ScreenMonitor", message=f"Received: {reply}")
             
             for attempt in range(5):
@@ -199,7 +193,8 @@ def accomodate_ophelia(port):
                 time.sleep(0.5) 
             else:
                 opr.print_from(name="ScreenMonitor", message=f"Failed to send plugin: {reply}")
-
+        else:
+            opr.print_from(name="ScreenMonitor", message=f"Failed to send PING: {reply}")
     opr.print_from(name="ScreenMonitor", message="Plugin subprocess exiting.")
     sys.exit(0)
 
