@@ -194,10 +194,10 @@ def accomodate_ophelia(port):
                 if reply.decode("utf-8") == "PING":
                     opr.print_from(name="ScreenMonitor", message=f"Received: {reply}")
                     break               
-                sock.sendall(("PONG").encode("utf-8"))
                 time.sleep(0.5) 
             else:
                 opr.print_from(name="ScreenMonitor", message=f"Failed to send plugin: {reply}")
+            sock.sendall(("PONG").encode("utf-8"))
         else:
             opr.print_from(name="ScreenMonitor", message=f"Failed to send PING: {reply}")
     opr.print_from(name="ScreenMonitor", message="Plugin subprocess exiting.")
