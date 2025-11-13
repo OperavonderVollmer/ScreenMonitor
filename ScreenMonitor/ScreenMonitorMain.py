@@ -10,13 +10,18 @@
 """
 
 from OperaPowerRelay import opr
-import os
+import os, sys
 import threading
 import win32gui
 import win32process
 import psutil
 import time
-from . import DataClasses
+plugin_folder = os.path.dirname(os.path.abspath(__file__))
+if plugin_folder not in sys.path:
+    sys.path.insert(0, plugin_folder)
+
+import  DataClasses
+
 from TrayIcon import TrayIcon
 import winotify
 import os
