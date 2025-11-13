@@ -155,6 +155,57 @@ class plugin(PluginTemplate.ophelia_plugin):
 def get_plugin(): return plugin()
 
 
+import sys
+
+def accomodate_ophelia(port):
+    import socket, time, pickle
+
+    error_count = 5
+    while error_count > 0:
+        opr.print_from(name="ScreenMonitor", message=f"Sending in {error_count} seconds...")
+        time.sleep(1)
+        error_count -= 1
+    
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        for attempt in range(5):
+            try:
+                sock.connect(("127.0.0.1", port))
+                opr.print_from(name="ScreenMonitor", message=f"Connected to 127.0.0.1:{port}")
+                break
+            except ConnectionRefusedError:
+                time.sleep(1)
+        else:
+            opr.print_from(name="ScreenMonitor", message=f"Failed to connect to 127.0.0.1:{port}")
+            return
+        
+
+        sock.sendall(("PING").encode("utf-8"))
+        reply = sock.recv(1024)
+        if reply.decode("utf-8") == b"PONG":
+            opr.print_from(name="ScreenMonitor", message=f"Received: {reply}")
+            
+            for attempt in range(5):
+                raw_plugin = plugin
+                pickled_plugin = pickle.dumps(raw_plugin)
+                sock.sendall(pickled_plugin)
+                reply = sock.recv(1024)
+                if reply.decode("utf-8") == "PING":
+                    break               
+                sock.sendall(("PONG").encode("utf-8"))
+                time.sleep(0.5) 
+            else:
+                opr.print_from(name="ScreenMonitor", message=f"Failed to send plugin: {reply}")
+
+    opr.print_from(name="ScreenMonitor", message="Plugin subprocess exiting.")
+    sys.exit(0)
+
+
+if len(sys.argv) > 1:    
+    accomodate_ophelia(int(sys.argv[1]))      
+
+
+
+
 """
 
 Notes: Tray icons are a mess
