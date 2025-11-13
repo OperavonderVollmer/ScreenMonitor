@@ -185,9 +185,11 @@ def accomodate_ophelia(port):
             for attempt in range(5):
                 raw_plugin = plugin
                 pickled_plugin = pickle.dumps(raw_plugin)
+                opr.print_from(name="ScreenMonitor", message=f"Sending plugin: {pickled_plugin}")
                 sock.sendall(pickled_plugin)
                 reply = sock.recv(1024)
                 if reply.decode("utf-8") == "PING":
+                    opr.print_from(name="ScreenMonitor", message=f"Received: {reply}")
                     break               
                 sock.sendall(("PONG").encode("utf-8"))
                 time.sleep(0.5) 
