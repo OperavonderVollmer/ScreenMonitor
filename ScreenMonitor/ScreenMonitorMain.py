@@ -16,9 +16,9 @@ import win32gui
 import win32process
 import psutil
 import time
-plugin_folder = os.path.dirname(os.path.abspath(__file__))
-if plugin_folder not in sys.path:
-    sys.path.insert(0, plugin_folder)
+root = os.path.dirname(os.path.abspath(__file__))
+if root not in sys.path:
+    sys.path.insert(0, root)
 
 import  DataClasses
 

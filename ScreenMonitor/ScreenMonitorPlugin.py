@@ -1,12 +1,9 @@
 from PluginTemplate import PluginTemplate
 import os, sys
-import os, sys
-plugin_folder = os.path.dirname(os.path.abspath(__file__))
-if plugin_folder not in sys.path:
-    sys.path.insert(0, plugin_folder)
-
+root = os.path.dirname(os.path.abspath(__file__))
+if root not in sys.path:
+    sys.path.insert(0, root)
 import ScreenMonitorMain, DataClasses
-
 from OperaPowerRelay import opr
 import threading 
 import queue
