@@ -186,6 +186,8 @@ def accomodate_ophelia(port):
                 raw_plugin = plugin
                 pickled_plugin = pickle.dumps(raw_plugin)
                 opr.print_from(name="ScreenMonitor", message=f"Sending plugin...")
+                length = len(pickled_plugin)
+                sock.sendall(length.to_bytes(8, 'big'))
                 sock.sendall(pickled_plugin)
                 opr.print_from(name="ScreenMonitor", message=f"Sent plugin!")
                 reply = sock.recv(1024)
