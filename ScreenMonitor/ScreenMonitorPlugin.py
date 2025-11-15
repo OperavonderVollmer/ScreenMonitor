@@ -47,7 +47,7 @@ class plugin(PluginTemplate.ophelia_plugin):
         
         self._running_operations = "START"
         self._screen_monitor.start()
-        self.tray_icon.start_icon(toast_args = {
+        self.tray_icon.start_icon({
             "app_id": "ScreenMonitor",
             "title": "ScreenMonitor",
             "msg": "Started tracking application usage in the background.",
@@ -66,7 +66,7 @@ class plugin(PluginTemplate.ophelia_plugin):
 
         self._data_thread = threading.Thread(target=self.generate_data, daemon=True)
         self._data_thread.start()
-        self.tray_icon.start_icon(toast_args = {
+        self.tray_icon.start_icon({
             "app_id": "ScreenMonitor",
             "title": "ScreenMonitor",
             "msg": "Started tracking application usage in the background.",
@@ -82,7 +82,7 @@ class plugin(PluginTemplate.ophelia_plugin):
             opr.print_from(name=self._meta["name"], message="Already stopped")
             return False
         self._running_operations = "STOP"
-        self.tray_icon.stop_icon(toast_args = {
+        self.tray_icon.stop_icon({
             "app_id": "ScreenMonitor",
             "title": "ScreenMonitor",
             "msg": "Stopped tracking application usage in the background.",
