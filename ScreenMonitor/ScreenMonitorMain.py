@@ -31,17 +31,7 @@ import win32process
 import win32con
 
 
-def send_toast_notification(message: str) -> None:
-    toast = winotify.Notification(
-        app_id="ScreenMonitor",
-        title="ScreenMonitor",
-        msg=message,
-        icon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"),
-        
-    )
-    toast.set_audio(winotify.audio.Default, loop=False)
-    toast.add_actions(label="Open Logs", launch=FILEDIR)
-    toast.show()
+
 
 def list_current_applications() -> tuple[bool, list[DataClasses.Application_Info]]:
 
@@ -263,7 +253,7 @@ def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None 
     
     trayicon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=MONITOR.menu_callback, closing_callback=stop)
     trayicon.start_icon()
-    send_toast_notification(message="Now tracking application usage in the background.")
+    opr.send_toast_notification(app_id = "ScreenMonitor", title="ScreenMonitor", msg="Started tracking application usage in the background.", icon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), actions={"Open Logs": FILEDIR})
     while not STOP_SIGNAL.is_set():
         try:
             time.sleep(0.5)
@@ -275,7 +265,7 @@ def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None 
             break
 
     trayicon.stop_icon()
-    send_toast_notification(message="Stopped tracking application usage in the background.")
+    opr.send_toast_notification(app_id = "ScreenMonitor", title="ScreenMonitor", msg="Stopped tracking application usage in the background.", icon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), actions={"Open Logs": FILEDIR})
     opr.print_from(name="ScreenMonitor", message="Thank you for using ScreenMonitor!")
 
         

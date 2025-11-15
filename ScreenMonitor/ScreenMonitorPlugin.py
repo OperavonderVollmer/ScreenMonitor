@@ -33,8 +33,8 @@ class plugin(PluginTemplate.ophelia_plugin):
                 "START": self.handle_start,
                 "ADVANCED": self.handle_adv,
                 "STOP": self.handle_stop,
-                "REPORT": self._screen_monitor.open_report,
-                "DIRECTORY": self._screen_monitor.open_directory,
+                "REPORT": self.handle_report,
+                "DIRECTORY": self.handle_directory,
             },
             git_repo="https://github.com/OperavonderVollmer/ScreenMonitor.git",
         )
@@ -43,31 +43,64 @@ class plugin(PluginTemplate.ophelia_plugin):
     def handle_start(self):    
         if self._running_operations == "START" or self._running_operations == "ADVANCED":
             opr.print_from(name=self._meta["name"], message="Already running")
-            return
+            return False
         
-        self._screen_monitor.start()
         self._running_operations = "START"
-        self.tray_icon.start_icon()
-        return
+        self._screen_monitor.start()
+        self.tray_icon.start_icon(toast_args = {
+            "app_id": "ScreenMonitor",
+            "title": "ScreenMonitor",
+            "msg": "Started tracking application usage in the background.",
+            "icon_path": os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"),
+            "actions": {
+                "Open Logs": ScreenMonitorMain.FILEDIR
+            }
+        })
+        return True
     
     def handle_adv(self):
         if self._running_operations == "START" or self._running_operations == "ADVANCED":
             opr.print_from(name=self._meta["name"], message="Already running")
-            return
-        
+            return False
+        self._running_operations = "ADVANCED"
+
         self._data_thread = threading.Thread(target=self.generate_data, daemon=True)
         self._data_thread.start()
-        self._running_operations = "ADVANCED"
-        self.tray_icon.start_icon()
-        return
+        self.tray_icon.start_icon(toast_args = {
+            "app_id": "ScreenMonitor",
+            "title": "ScreenMonitor",
+            "msg": "Started tracking application usage in the background.",
+            "icon_path": os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"),
+            "actions": {
+                "Open Logs": ScreenMonitorMain.FILEDIR
+            }
+        })
+        return True
 
     def handle_stop(self):
         if self._running_operations == "STOP":
-            return
-        self._screen_monitor.stop()
+            opr.print_from(name=self._meta["name"], message="Already stopped")
+            return False
         self._running_operations = "STOP"
-        if not self.tray_icon._stop_signal.is_set():
-            self.tray_icon.stop_icon()
+        self.tray_icon.stop_icon(toast_args = {
+            "app_id": "ScreenMonitor",
+            "title": "ScreenMonitor",
+            "msg": "Stopped tracking application usage in the background.",
+            "icon_path": os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"),
+            "actions": {
+                "Open Logs": ScreenMonitorMain.FILEDIR
+            }
+        })
+        self._screen_monitor.stop()
+        return True
+
+    def handle_report(self):
+        self._screen_monitor.open_report()
+        return True
+    
+    def handle_directory(self):
+        self._screen_monitor.open_directory()
+        return True
 
     def stream_data(self) -> Iterator:
 
@@ -144,7 +177,6 @@ class plugin(PluginTemplate.ophelia_plugin):
    
 
     def execute(self):
-        # self.handle_commands(self.get_operation())
         return super().run_command()
 
     def direct_execute(self, *args, **kwargs):
