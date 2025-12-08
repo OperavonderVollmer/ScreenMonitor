@@ -193,11 +193,17 @@ class plugin(PluginTemplate.ophelia_plugin):
             )
         )
 
-    def execute(self):
-        return super().run_command()
+    def execute(self, **kwargs):
+        if kwargs.get("command", None):
+            return self.direct_execute(kwargs["command"])
+        elif kwargs.get("generic_input", None):
+            return self.direct_execute(kwargs["generic_input"])
+        else:
+            return super().run_command()
 
     def direct_execute(self, command):
-        return super().direct_execute(command)
+        if command in self._meta["command_map"]:
+            return self._meta["command_map"][command]()
     
     def clean_up(self, *args, **kwargs):     
         self.handle_stop()
