@@ -1,4 +1,4 @@
-from PluginTemplate import PluginTemplate
+from PluginTemplate import PluginTemplate, DSL
 import os, sys
 root = os.path.dirname(os.path.abspath(__file__))
 if root not in sys.path:
@@ -11,6 +11,8 @@ import datetime
 from typing import Iterator
 from TrayIcon import TrayIcon
 import os
+
+
 class plugin(PluginTemplate.ophelia_plugin):
     def __init__(self):
 
@@ -175,12 +177,27 @@ class plugin(PluginTemplate.ophelia_plugin):
         self._running.clear()
 
    
+    def input_scheme(self, *args, **kwargs):
+
+        return DSL.JS_Page(
+            title="ScreenMonitor",
+            root=DSL.JS_Div(
+                id="ScreenMonitor",
+                children=[
+                    DSL.JS_Select(
+                        id="command",
+                        label="Select an option",
+                        options= self._meta["command_map"].keys(),
+                    )
+                ]
+            )
+        )
 
     def execute(self):
         return super().run_command()
 
-    def direct_execute(self, *args, **kwargs):
-        return super().direct_execute(*args, **kwargs)
+    def direct_execute(self, command):
+        return super().direct_execute(command)
     
     def clean_up(self, *args, **kwargs):     
         self.handle_stop()
@@ -229,6 +246,7 @@ def accomodate_ophelia(port):
             sock.sendall(("PONG").encode("utf-8"))
         else:
             opr.print_from(name="ScreenMonitor", message=f"Failed to send PING: {reply}")
+    
     opr.print_from(name="ScreenMonitor", message="Plugin subprocess exiting.")
     sys.exit(0)
 
