@@ -177,21 +177,18 @@ class plugin(PluginTemplate.ophelia_plugin):
         self._running.clear()
 
    
-    def input_scheme(self, *args, **kwargs):
-
-        return DSL.JS_Page(
-            title="ScreenMonitor",
-            root=DSL.JS_Div(
+    def input_scheme(self, root = None, serialize: bool = False):
+        scheme = super().input_scheme(root=root or DSL.JS_Div(
                 id="ScreenMonitor",
                 children=[
                     DSL.JS_Select(
                         id="command",
                         label="Select an option",
-                        options= self._meta["command_map"].keys(),
+                        options= list(self._meta["command_map"].keys()),
                     )
                 ]
-            )
-        )
+            ))
+        return scheme if not serialize else scheme.serialize()
 
     def execute(self, **kwargs):
         if kwargs.get("command", None):
