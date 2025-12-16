@@ -223,7 +223,11 @@ class Mister_Monitor:
     
     def open_report(self, open_json: bool = True):
         try:
-            self.save_log(datetime.datetime.now(), manual=True)
+            
+            if len(self._applications) > 0:
+                self.save_log(datetime.datetime.now(), manual=True)
+            else:
+                print("No data to save, skipping...")
         except IndexError:
             pass
 
@@ -237,13 +241,14 @@ class Mister_Monitor:
             return None
 
         latest_file = max(files, key=os.path.getmtime)
+        print(f"Latest file: {latest_file}")
 
         if open_json:
             os.startfile(latest_file)
             return None
-
-        with open(latest_file, "r", encoding="utf-8") as f:
-            return json.load(f)
+        else:
+            with open(latest_file, "r", encoding="utf-8") as f:
+                return json.load(f)
 
     def open_directory(self) -> None:
         path = self._file_dir
@@ -318,6 +323,8 @@ class Mister_Monitor:
                 if as_iterator:
                     yield self.make_log(snapped_time, manual=False)
                 self._is_running = False
+
+        self.save_log(snapped_time, manual=False)
 
     def _run_monitor_thread(self, as_iterator: bool | None = False):
         for _ in self._monitor(as_iterator=as_iterator): # type: ignore

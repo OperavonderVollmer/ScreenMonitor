@@ -11,6 +11,7 @@ import datetime
 from typing import Iterator
 from TrayIcon import TrayIcon
 import os
+import datetime
 
 
 class plugin(PluginTemplate.ophelia_plugin):
@@ -83,6 +84,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                 }
             })
             message = "ScreenMonitor STARTED successfully."
+            
         return super().input_scheme(
             root=DSL.JS_Div(
                 id="ScreenMonitor",
@@ -92,8 +94,8 @@ class plugin(PluginTemplate.ophelia_plugin):
                         text=message,
                     )
                 ]
-            ), form=False, serialize=True
-        )
+            ), form=False, serialize=True)
+        
 
     def handle_stop(self):
         message=""
@@ -158,10 +160,12 @@ class plugin(PluginTemplate.ophelia_plugin):
 
     def handle_report(self):
         _ = self._screen_monitor.open_report(open_json=False)
+        print("Report: ", _)
         report = self.transmute_report(_) # type: ignore
 
         top5_children = []
-        for i, app in enumerate(report["report"]["top5"], start=1):
+        print(f"REPORT!!!! {report}")
+        for i, app in enumerate(report["meta"]["top5"], start=1):
             top5_children.append(
                 DSL.JS_Header_Div(
                     id=f"Top5_App_{i}",
@@ -169,7 +173,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                     header_level=4,
                     child=DSL.JS_Label(
                         id=f"Top5_App_{i}_Time",
-                        text=f"{app['time_seconds']:.2f}s"
+                        text=opr.clean_time(datetime.timedelta(seconds=app["time_seconds"]))
                     )
                 )
             )
@@ -183,73 +187,69 @@ class plugin(PluginTemplate.ophelia_plugin):
                     header_level=4,
                     child=DSL.JS_Label(
                         id=f"Entries_App_{i}_Time",
-                        text=f"{app['time_seconds']:.2f}s"
+                        text=opr.clean_time(datetime.timedelta(seconds=app["time_seconds"]))
                     )
                 )
         )
 
-        report_dsl = DSL.JS_Div(
+        report_dsl = DSL.JS_Header_Div(
             id="ScreenMonitor_Report",
-            children=[
-                DSL.JS_Header_Div(
-                    id="ScreenMonitor_Timestamp",
-                    header="Timestamp",
-                    header_level=2,
-                    child=DSL.JS_Label(
-                        id="ScreenMonitor_Timestamp_Text",
-                        text=report["report"]["timestamp"],
-                    )
-                ),
-                DSL.JS_Header_Div(
-                    id="ScreenMonitor_TotalTime",
-                    header="Elapsed Time",
-                    header_level=2,
-                    child=DSL.JS_Label(
-                        id="ScreenMonitor_TotalTime_Text",
-                        text=str(report["report"]["total_time_seconds"]),
-                    )
-                ),
-                DSL.JS_Div( # Most Active
-                    id="ScreenMonitor_MostActive",
-                    children=[
-                        DSL.JS_Header_Div(
-                            id="ScreenMonitor_MostActive_App",
-                            header="Most Active App",
-                            header_level=3,
-                            child=DSL.JS_Label(
-                                id="ScreenMonitor_MostActive_App_Text",
-                                text=report["report"]["most_active"]["name"],
-                            )
-                        ),
-                        DSL.JS_Header_Div(
-                            id="ScreenMonitor_MostActive_Time",
-                            header="Elapsed Time",
-                            header_level=3,
-                            child=DSL.JS_Label(
-                                id="ScreenMonitor_MostActive_Time_Text",
-                                text=report["report"]["most_active"]["time"],
-                            )
-                        ),
-                        DSL.JS_Header_Div(
-                            id="ScreenMonitor_MostActive_FocusedTime",
-                            header="Focused Time",
-                            header_level=3,
-                            child=DSL.JS_Label(
-                                id="ScreenMonitor_MostActive_FocusedTime_Text",
-                                text="{:.2f}s".format(report["report"]["most_active"]["focused_time"] * 100),
-                            )
-                        ),
-                    ],
-                ),
-                DSL.JS_Div( # Top 5
-                    id="ScreenMonitor_Top5",
-                    children=top5_children,
-                ),
-                DSL.JS_Div( # Entries
-                    id="ScreenMonitor_Entries",
-                    children=entries_children,
-                ),
-            ]
+            header="Report for " + datetime.datetime.fromisoformat(str(report["meta"]["timestamp"])).strftime("%B %d, %Y at %H:%M:%S"),
+            header_level=1,
+            child=DSL.JS_Div(
+                id="ScreenMonitor_Report_Content",
+                children=[                
+                    DSL.JS_Header_Div(
+                        id="ScreenMonitor_TotalTime",
+                        header="Elapsed Time",
+                        header_level=2,
+                        child=DSL.JS_Label(
+                            id="ScreenMonitor_TotalTime_Text",
+                            text=opr.clean_time(datetime.timedelta(seconds=report["meta"]["total_time_seconds"])),
+                        )
+                    ),
+                    DSL.JS_Div( # Most Active
+                        id="ScreenMonitor_MostActive",
+                        children=[
+                            DSL.JS_Header_Div(
+                                id="ScreenMonitor_MostActive_App",
+                                header="Most Active App",
+                                header_level=3,
+                                child=DSL.JS_Label(
+                                    id="ScreenMonitor_MostActive_App_Text",
+                                    text=report["meta"]["most_active"]["name"],
+                                )
+                            ),
+                            DSL.JS_Header_Div(
+                                id="ScreenMonitor_MostActive_Time",
+                                header="Elapsed Time",
+                                header_level=3,
+                                child=DSL.JS_Label(
+                                    id="ScreenMonitor_MostActive_Time_Text",
+                                    text=opr.clean_time(datetime.timedelta(seconds=report["meta"]["most_active"]["time_seconds"])),
+                                )
+                            ),
+                            DSL.JS_Header_Div(
+                                id="ScreenMonitor_MostActive_FocusedTime",
+                                header="Focused Time",
+                                header_level=3,
+                                child=DSL.JS_Label(
+                                    id="ScreenMonitor_MostActive_FocusedTime_Text",
+                                    text=f"{opr.clean_time(datetime.timedelta(seconds=report['meta']['most_active']['focused_seconds']))} ({report['meta']['most_active']['focus_ratio']*100:.2f}%)"
+                                )
+                            ),
+                        ],
+                    ),
+                    DSL.JS_Div( # Top 5
+                        id="ScreenMonitor_Top5",
+                        children=top5_children,
+                    ),
+                    DSL.JS_Div( # Entries
+                        id="ScreenMonitor_Entries",
+                        children=entries_children,
+                    ),
+                ]
+            )
         )
 
         return super().input_scheme(root=report_dsl, form=False, serialize=True)
@@ -374,66 +374,3 @@ class plugin(PluginTemplate.ophelia_plugin):
         self.handle_stop()
 
 def get_plugin(): return plugin()
-
-
-import sys
-
-def accomodate_ophelia(port):
-    import socket, time, pickle
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        for attempt in range(5):
-            try:
-                sock.connect(("127.0.0.1", port))
-                opr.print_from(name="ScreenMonitor", message=f"Connected to 127.0.0.1:{port}")
-                break
-            except ConnectionRefusedError:
-                time.sleep(1)
-        else:
-            opr.print_from(name="ScreenMonitor", message=f"Failed to connect to 127.0.0.1:{port}")
-            return
-        
-
-        sock.sendall(("PING").encode("utf-8"))
-        reply = sock.recv(1024)
-        if reply.decode("utf-8") == "PONG":
-            opr.print_from(name="ScreenMonitor", message=f"Received: {reply}")
-            
-            for attempt in range(5):
-                raw_plugin = plugin
-                pickled_plugin = pickle.dumps(raw_plugin)
-                opr.print_from(name="ScreenMonitor", message=f"Sending plugin...")
-                length = len(pickled_plugin)
-                sock.sendall(length.to_bytes(8, 'big'))
-                sock.sendall(pickled_plugin)
-                opr.print_from(name="ScreenMonitor", message=f"Sent plugin!")
-                reply = sock.recv(1024)
-                if reply.decode("utf-8") == "PING":
-                    opr.print_from(name="ScreenMonitor", message=f"Received: {reply}")
-                    break               
-                time.sleep(0.5) 
-            else:
-                opr.print_from(name="ScreenMonitor", message=f"Failed to send plugin: {reply}")
-            sock.sendall(("PONG").encode("utf-8"))
-        else:
-            opr.print_from(name="ScreenMonitor", message=f"Failed to send PING: {reply}")
-    
-    opr.print_from(name="ScreenMonitor", message="Plugin subprocess exiting.")
-    sys.exit(0)
-
-
-if len(sys.argv) > 1:    
-    accomodate_ophelia(int(sys.argv[1]))      
-
-
-
-
-"""
-
-Notes: Tray icons are a mess
-Here's what I want to do:
-> Start > Icon shows
-> Stop > Icon disappears
-> Clean up > Checks if Icon is on > Icon disappears
-
-"""
