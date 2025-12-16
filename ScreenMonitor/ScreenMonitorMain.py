@@ -133,7 +133,7 @@ def _window_callback(hwnd, context):
         # 5. Skip known system processes
         try:
             process = psutil.Process(pid)
-            exe_path = process.exe().lower()
+            exe_path = process.exe().lower() # type: ignore
             exe_name = os.path.basename(exe_path)
             username = process.username().upper()
         except (psutil.NoSuchProcess, psutil.AccessDenied):
@@ -194,7 +194,7 @@ def windows_get_applications() -> list[DataClasses.Application_Info]:
 
 
 INTERVAL: int = 0
-FILEDIR: str = os.path.join(opr.get_special_folder_path("Documents"), "Opera Tools")
+FILEDIR: str = os.path.join(opr.get_special_folder_path("Documents"), "Opera Tools", "ScreenMonitor")
 IS_MODULE: bool = False
 PLATFORM: str = "Windows"
 MONITOR: DataClasses.Mister_Monitor | None = None
@@ -253,7 +253,7 @@ def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None 
     
     trayicon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=MONITOR.menu_callback, closing_callback=stop)
     trayicon.start_icon()
-    opr.send_toast_notification(app_id = "ScreenMonitor", title="ScreenMonitor", msg="Started tracking application usage in the background.", icon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), actions={"Open Logs": FILEDIR})
+    opr.send_toast_notification(app_id = "ScreenMonitor", title="ScreenMonitor", msg="Started tracking application usage in the background.", icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), actions={"Open Logs": FILEDIR})
     while not STOP_SIGNAL.is_set():
         try:
             time.sleep(0.5)
@@ -265,7 +265,7 @@ def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None 
             break
 
     trayicon.stop_icon()
-    opr.send_toast_notification(app_id = "ScreenMonitor", title="ScreenMonitor", msg="Stopped tracking application usage in the background.", icon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), actions={"Open Logs": FILEDIR})
+    opr.send_toast_notification(app_id = "ScreenMonitor", title="ScreenMonitor", msg="Stopped tracking application usage in the background.", icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), actions={"Open Logs": FILEDIR})
     opr.print_from(name="ScreenMonitor", message="Thank you for using ScreenMonitor!")
 
         
