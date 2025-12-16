@@ -5,6 +5,8 @@ import threading
 import datetime
 import pystray
 from typing import Iterator
+import json
+
 class Application_Info:
     def __init__(self, name: str, exe_name: str, process_id: int, is_focused: bool) -> None:
         self._name: str = name
@@ -139,55 +141,109 @@ class Mister_Monitor:
         if manual:
             opr.print_from(
                 name="ScreenMonitor",
-                message=f"Interval Report for {snapped_time.strftime('%Y-%m-%d-%H-%M-%S')} "
-                        f"================== Time elapsed {duration:.2f}s",
+                message=(
+                    f"Interval Report for {snapped_time.strftime('%Y-%m-%d-%H-%M-%S')} "
+                    f"================== Time elapsed {duration:.2f}s"
+                ),
                 return_count=2
             )
 
+        # Enrich entries (still fine)
         for app in dump:
-            elapsed_percentage = min((app["time"] / duration) * 100, 100.0) if duration > 0 else 0
-            focused_elapsed_percentage = min((app["focused_time"] / duration) * 100, 100.0) if duration > 0 else 0
+            elapsed_pct = (app["time"] / duration * 100) if duration > 0 else 0
+            focused_pct = (app["focused_time"] / duration * 100) if duration > 0 else 0
 
-            app['remark'] = (
+            app["elapsed_ratio"] = min(elapsed_pct / 100, 1.0)
+            app["focused_ratio"] = min(focused_pct / 100, 1.0)
+
+            app["remark"] = (
                 f"{app['name']} is {'ACTIVE' if app['is_active'] else 'INACTIVE'} | "
-                f"Time elapsed {app['time']:.2f}s ({elapsed_percentage:.1f}%) | "
-                f"Focused Time {app['focused_time']:.2f}s ({focused_elapsed_percentage:.1f}%)"
+                f"Time elapsed {app['time']:.2f}s ({elapsed_pct:.1f}%) | "
+                f"Focused Time {app['focused_time']:.2f}s ({focused_pct:.1f}%)"
             )
-            if manual:
-                opr.print_from(name="ScreenMonitor", message=app['remark'])
 
-        most_active = sorted(dump, key=lambda x: x["focused_time"], reverse=True)
-        top5_list = sorted(dump, key=lambda x: x["time"], reverse=True)[:5]
-        top5 = [f"{app['time']:.2f}s | Focused: {app['focused_time']:.2f}s | {app['name']}" for app in top5_list]
-        most_active_focused_percentage = (
-            min((most_active[0]["focused_time"] / duration) * 100, 100.0) if duration > 0 else 0
-        )
+            if manual:
+                opr.print_from(name="ScreenMonitor", message=app["remark"])
+
+        # Ranking
+        most_active = max(dump, key=lambda x: x["focused_time"], default=None)
+        top5 = sorted(dump, key=lambda x: x["time"], reverse=True)[:5]
 
         report = {
-            "Date": snapped_time.strftime("%Y-%m-%d-%H-%M-%S"),
-            "Total Time": str(snapped_time - self._start_time),
-            "Most Active Application": (
-                f"{most_active[0]['time']:.2f}s | Focused: {most_active[0]['focused_time']:.2f}s | "
-                f"{most_active_focused_percentage:.1f}% | "
-                f"{most_active[0]['name']}"
+            "timestamp": snapped_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "total_time_seconds": duration,
+            "most_active": (
+                {
+                    "name": most_active["name"],
+                    "exe": most_active["exe_name"],
+                    "time_seconds": most_active["time"],
+                    "focused_seconds": most_active["focused_time"],
+                    "focus_ratio": most_active["focused_ratio"],
+                }
+                if most_active
+                else None
             ),
-            "Top 5 Applications": top5,
+            "top5": [
+                {
+                    "name": app["name"],
+                    "exe": app["exe_name"],
+                    "time_seconds": app["time"],
+                    "focused_seconds": app["focused_time"],
+                    "focus_ratio": app["focused_ratio"],
+                }
+                for app in top5
+            ],
         }
-        export = {
-            "Report": report, 
-            str(datetime.date.today().isoformat()): dump
-        }
-        if manual:
-            opr.print_from(name="ScreenMonitor", message=f"{self._file_dir} | ScreenMonitor{snapped_time.date().isoformat()}.json")
-        return export
-    
 
-    def open_report(self) -> None:
-        now = datetime.datetime.now()
-        self.save_log(now, manual=True)
-        path = os.path.join(self._file_dir, f"ScreenMonitor{now.date().isoformat()}.json")
-        if os.path.exists(path):
-            os.startfile(path)
+        export = {
+            "report": report,
+            "entries": dump,
+        }
+
+        if manual:
+            opr.print_from(
+                name="ScreenMonitor",
+                message=f"{self._file_dir} | ScreenMonitor{snapped_time.date().isoformat()}.json",
+            )
+
+        return export
+
+
+    # def open_report(self, open_json=True) -> None:
+    #     now = datetime.datetime.now()
+    #     self.save_log(now, manual=True)
+    #     path = os.path.join(self._file_dir, f"ScreenMonitor{now.date().isoformat()}.json")
+    #     if os.path.exists(path):
+    #         if open_json:
+    #             os.startfile(path)            
+    #         else:
+    #             with open(path, "r", encoding="utf-8") as f: # type: ignore
+    #                 return json.load(f)
+
+    
+    def open_report(self, open_json: bool = True):
+        try:
+            self.save_log(datetime.datetime.now(), manual=True)
+        except IndexError:
+            pass
+
+        files = [
+            os.path.join(self._file_dir, f)
+            for f in os.listdir(self._file_dir)
+            if f.startswith("ScreenMonitor") and f.endswith(".json")
+        ]
+
+        if not files:
+            return None
+
+        latest_file = max(files, key=os.path.getmtime)
+
+        if open_json:
+            os.startfile(latest_file)
+            return None
+
+        with open(latest_file, "r", encoding="utf-8") as f:
+            return json.load(f)
 
     def open_directory(self) -> None:
         path = self._file_dir
