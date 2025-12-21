@@ -4,12 +4,11 @@ root = os.path.dirname(os.path.abspath(__file__))
 if root not in sys.path:
     sys.path.insert(0, root)
 import ScreenMonitorMain, DataClasses
-from OperaPowerRelay import opr
+from OperaPowerRelay import opr, trayicon as TrayIcon
 import threading 
 import queue
 import datetime
 from typing import Iterator
-from TrayIcon import TrayIcon
 import os
 import datetime
 
@@ -29,7 +28,7 @@ class plugin(PluginTemplate.ophelia_plugin):
 
 
 
-        # Only START, STOP, and REPORT commands are available for Ortlinde. The other commands are for internal use and only accessible using terminal commands and the tray icon.
+        # Only START, STOP, REPORT, DIRECTORY commands are available for Ortlinde. The other commands are for internal use and only accessible using terminal commands and the tray icon.
 
         super().__init__(
             name="ScreenMonitor",
@@ -128,43 +127,56 @@ class plugin(PluginTemplate.ophelia_plugin):
         )
 
 
-    def transmute_report(self, raw: dict) -> dict:
-        report = raw.get("report", {})
-        entries = raw.get("entries", [])
-
-        clean_entries = []
-        for e in entries:
-            clean_entries.append({
-                "app": e["name"],
-                "exe": e["exe_name"],
-                "pid": e["process_id"],
-                "time_seconds": float(e["time"]),
-                "focused_seconds": float(e["focused_time"]),
-                "active": bool(e["is_active"]),
-                "elapsed_ratio": float(e.get("elapsed_ratio", 0)),
-                "focused_ratio": float(e.get("focused_ratio", 0)),
-                "start": e["start_time"],
-                "end": None if e["end_time"] == "STILL ACTIVE" else e["end_time"],
-            })
-
-        return {
-            "meta": {
-                "timestamp": report.get("timestamp"),
-                "total_time_seconds": report.get("total_time_seconds"),
-                "most_active": report.get("most_active"),
-                "top5": report.get("top5", []),
-            },
-            "entries": clean_entries,
-        }
+    
 
 
     def handle_report(self):
+
+        def transmute_report(raw: dict) -> dict:
+            report = raw.get("report", {})
+            entries = raw.get("entries", [])
+
+            clean_entries = []
+            for e in entries:
+                clean_entries.append({
+                    "app": e["name"],
+                    "exe": e["exe_name"],
+                    "pid": e["process_id"],
+                    "time_seconds": float(e["time"]),
+                    "focused_seconds": float(e["focused_time"]),
+                    "active": bool(e["is_active"]),
+                    "elapsed_ratio": float(e.get("elapsed_ratio", 0)),
+                    "focused_ratio": float(e.get("focused_ratio", 0)),
+                    "start": e["start_time"],
+                    "end": None if e["end_time"] == "STILL ACTIVE" else e["end_time"],
+                })
+
+            return {
+                "meta": {
+                    "timestamp": report.get("timestamp"),
+                    "total_time_seconds": report.get("total_time_seconds"),
+                    "most_active": report.get("most_active"),
+                    "top5": report.get("top5", []),
+                },
+                "entries": clean_entries,
+            }
+
         _ = self._screen_monitor.open_report(open_json=False)
-        print("Report: ", _)
-        report = self.transmute_report(_) # type: ignore
+        if _ is None:
+            return super().input_scheme(
+                root=DSL.JS_Div(
+                    id="ScreenMonitor_Report",
+                    children=[
+                        DSL.JS_Label(
+                            id="ScreenMonitor_NoReport",
+                            text="No report found. Please run ScreenMonitor first.",
+                        )
+                    ]
+                ), form=False, serialize=True
+            )
+        report = transmute_report(_) # type: ignore
 
         top5_children = []
-        print(f"REPORT!!!! {report}")
         for i, app in enumerate(report["meta"]["top5"], start=1):
             top5_children.append(
                 DSL.JS_Header_Div(
@@ -196,6 +208,7 @@ class plugin(PluginTemplate.ophelia_plugin):
             id="ScreenMonitor_Report",
             header="Report for " + datetime.datetime.fromisoformat(str(report["meta"]["timestamp"])).strftime("%B %d, %Y at %H:%M:%S"),
             header_level=1,
+            header_classes="bold",
             child=DSL.JS_Div(
                 id="ScreenMonitor_Report_Content",
                 children=[                
@@ -210,44 +223,63 @@ class plugin(PluginTemplate.ophelia_plugin):
                     ),
                     DSL.JS_Div( # Most Active
                         id="ScreenMonitor_MostActive",
+                        classes="divHorizontal divRaised compensateMarginRight",
                         children=[
                             DSL.JS_Header_Div(
                                 id="ScreenMonitor_MostActive_App",
                                 header="Most Active App",
-                                header_level=3,
+                                header_level=4,
+                                div_classes="divCentered",
                                 child=DSL.JS_Label(
                                     id="ScreenMonitor_MostActive_App_Text",
+                                    classes="noInputFieldDefaults",
                                     text=report["meta"]["most_active"]["name"],
                                 )
                             ),
                             DSL.JS_Header_Div(
                                 id="ScreenMonitor_MostActive_Time",
                                 header="Elapsed Time",
-                                header_level=3,
+                                header_level=4,
+                                div_classes="divCentered",
                                 child=DSL.JS_Label(
                                     id="ScreenMonitor_MostActive_Time_Text",
+                                    classes="noInputFieldDefaults",
                                     text=opr.clean_time(datetime.timedelta(seconds=report["meta"]["most_active"]["time_seconds"])),
                                 )
                             ),
                             DSL.JS_Header_Div(
                                 id="ScreenMonitor_MostActive_FocusedTime",
                                 header="Focused Time",
-                                header_level=3,
+                                header_level=4,
+                                div_classes="divCentered",
                                 child=DSL.JS_Label(
                                     id="ScreenMonitor_MostActive_FocusedTime_Text",
+                                    classes="noInputFieldDefaults",
                                     text=f"{opr.clean_time(datetime.timedelta(seconds=report['meta']['most_active']['focused_seconds']))} ({report['meta']['most_active']['focus_ratio']*100:.2f}%)"
                                 )
                             ),
                         ],
                     ),
-                    DSL.JS_Div( # Top 5
+                    DSL.JS_Header_Div(
                         id="ScreenMonitor_Top5",
-                        children=top5_children,
+                        header="Top 5 Apps",
+                        header_level=2,
+                        header_classes="bold",
+                        child=DSL.JS_Div(
+                            id="ScreenMonitor_Top5_List",
+                            children=top5_children,
+                        )
                     ),
-                    DSL.JS_Div( # Entries
-                        id="ScreenMonitor_Entries",
-                        children=entries_children,
-                    ),
+                    DSL.JS_Header_Div(
+                        id="ScreenMonitor_AllEntries",
+                        header="All Recorded Entries",
+                        header_level=2,
+                        header_classes="bold",
+                        child=DSL.JS_Div(
+                            id="ScreenMonitor_AllEntries_List",
+                            children=entries_children,
+                        )
+                    )
                 ]
             )
         )
@@ -257,7 +289,17 @@ class plugin(PluginTemplate.ophelia_plugin):
     
     def handle_directory(self):
         self._screen_monitor.open_directory()
-        return True
+        return super().input_scheme(
+            root=DSL.JS_Div(
+                id="ScreenMonitor",
+                children=[
+                    DSL.JS_Label(
+                        id="ScreenMonitor_Reply",
+                        text="Opened ScreenMonitor log directory on host machine.",
+                    )
+                ]
+            ), form=False, serialize=True
+        )
     
     def handle_json(self):
         self._screen_monitor.open_report()
@@ -352,7 +394,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                     DSL.JS_Select(
                         id="command",
                         label="Select an option",
-                        options= ["START", "STOP", "REPORT"],
+                        options= ["START", "STOP", "REPORT", "DIRECTORY"],
                     )
                 ]
             ), form=form, serialize=True)

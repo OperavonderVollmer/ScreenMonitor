@@ -208,23 +208,10 @@ class Mister_Monitor:
 
         return export
 
-
-    # def open_report(self, open_json=True) -> None:
-    #     now = datetime.datetime.now()
-    #     self.save_log(now, manual=True)
-    #     path = os.path.join(self._file_dir, f"ScreenMonitor{now.date().isoformat()}.json")
-    #     if os.path.exists(path):
-    #         if open_json:
-    #             os.startfile(path)            
-    #         else:
-    #             with open(path, "r", encoding="utf-8") as f: # type: ignore
-    #                 return json.load(f)
-
     
     def open_report(self, open_json: bool = True):
-        try:
-            
-            if len(self._applications) > 0:
+        try:            
+            if len(self._applications) > 0 and self._is_running:
                 self.save_log(datetime.datetime.now(), manual=True)
             else:
                 print("No data to save, skipping...")

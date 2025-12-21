@@ -9,7 +9,7 @@
     
 """
 
-from OperaPowerRelay import opr
+from OperaPowerRelay import opr, trayicon as TrayIcon
 import os, sys
 import threading
 import win32gui
@@ -22,7 +22,6 @@ if root not in sys.path:
 
 import  DataClasses
 
-from TrayIcon import TrayIcon
 import winotify
 import os
 import psutil
