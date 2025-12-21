@@ -1,34 +1,66 @@
 # ScreenMonitor
 
-**Ophelia Suite Plugin: Desktop Screen Monitoring and Capture**
+**Ophelia Suite Plugin — Application Time Logging & Foreground Activity Tracking**
 
-ScreenMonitor is a modular Python plugin for the [Ophelia Suite](https://github.com/OperavonderVollmer/Ophelia), providing continuous or triggered screen observation, image capture, and basic analysis capabilities. Designed to adhere strictly to the [PluginTemplate](https://github.com/OperavonderVollmer/PluginTemplate) abstract base class, it enables seamless integration into the broader automation orchestration system.
+ScreenMonitor is a lightweight desktop monitoring plugin that tracks application lifetimes, total runtime, and foreground usage. It is designed for unobtrusive, offline operation and integrates cleanly into the **Ophelia Suite** via a standardized plugin lifecycle.
 
-## Features
+As an Ophelia plugin, ScreenMonitor conforms to the [PluginTemplate](https://github.com/OperavonderVollmer/PluginTemplate) abstract base class (`prep → execute → cleanup`) and is orchestrated through [OperaPowerRelay](https://github.com/OperavonderVollmer/OperaPowerRelay). A system tray interface (via `pystray`) allows continuous background execution without user disruption.
 
-- **Screen Capture**: Periodic or event-driven screenshots using Pillow.
-- **System Tray Integration**: Minimized operation with status indicators via pystray.
-- **Plugin Lifecycle Compliance**: Standard prep/execute/cleanup methods for reliable orchestration via OperaPowerRelay.
-- **Extensibility**: Configurable monitoring intervals, regions of interest, and post-capture hooks.
+---
 
-## Installation
+## Key Capabilities
 
-### As Ophelia Plugin (Recommended)
+- **Application Lifetime Tracking**  
+  Records process start/end times and total runtime per application.
 
-Place this repository in the Ophelia backend plugins directory and ensure dependencies are met suite-wide.
+- **Foreground Usage Measurement**  
+  Tracks active user focus time by monitoring window state and foreground transitions.
 
-### Standalone Development
+- **Structured Logging & Reporting**  
+  Outputs timestamped logs and aggregated summaries in JSON format for downstream analysis.
 
-```bash
-git clone https://github.com/OperavonderVollmer/ScreenMonitor.git
-cd ScreenMonitor
+- **Ophelia Plugin Compliance**  
+  Enforces metadata standards, lifecycle hooks, and inter-plugin communication.
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+- **Offline & Extensible by Design**  
+  No network dependency. Easily extended with filters (e.g., application whitelists/blacklists).
 
-# Install dependencies
-pip install pillow pystray git+https://github.com/OperavonderVollmer/OperaPowerRelay.git
+---
 
-# Editable install (if using setup.py)
-pip install -e .
+## Project Structure
+```
+ScreenMonitor/
+├── main.py          # Core plugin logic (monitoring and logging)
+├── quickstart.py    # Standalone testing entrypoint
+├── GET STARTED.bat  # Windows dependency installer and launcher
+├── requirements.txt # Core dependencies
+├── setup.py         # Editable package configuration
+└── ScreenMonitor/    # Internal modules (refactored December 2025)
+```
+---
+
+## Installation & Usage
+
+### As an Ophelia Plugin (Recommended)
+
+1. Install ScreenMonitor through Ophelia’s plugin setup workflow.
+2. Launch Ophelia and select **START** to begin background logging.
+
+All dependencies are handled automatically during Ophelia’s setup phase.
+
+---
+
+### Standalone Mode (Windows)
+
+1. Download the repository as a ZIP and extract it to a local directory.
+2. Run `GET STARTED.bat` to install required dependencies.
+3. After setup completes, launch `start ScreenMonitor.bat` to begin monitoring.
+
+
+---
+
+## Notes
+
+- ScreenMonitor is designed to run continuously with minimal overhead.
+- Logged data is local-only by default.
+- Intended as a foundational telemetry component within the broader Ophelia automation ecosystem.
