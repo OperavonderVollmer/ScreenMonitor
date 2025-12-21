@@ -4,7 +4,7 @@
 
 ScreenMonitor is a lightweight desktop monitoring plugin that tracks application lifetimes, total runtime, and foreground usage. It is designed for unobtrusive, offline operation and integrates cleanly into the **Ophelia Suite** via a standardized plugin lifecycle.
 
-As an Ophelia plugin, ScreenMonitor conforms to the [PluginTemplate](https://github.com/OperavonderVollmer/PluginTemplate) abstract base class (`prep → execute → cleanup`) and is orchestrated through [OperaPowerRelay](https://github.com/OperavonderVollmer/OperaPowerRelay). A system tray interface (via `pystray`) allows continuous background execution without user disruption.
+As an Ophelia plugin, ScreenMonitor conforms to the [PluginTemplate](https://github.com/OperavonderVollmer/PluginTemplate) abstract base class (`prep → execute → cleanup`) and is orchestrated through [Ophelia](https://github.com/OperavonderVollmer/Ophelia). A system tray interface (via `pystray`) allows continuous background execution without user disruption.
 
 ---
 
