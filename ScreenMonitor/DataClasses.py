@@ -125,11 +125,10 @@ class Mister_Monitor:
             self._next_log_time = datetime.datetime.now() + datetime.timedelta(minutes=self._interval)
 
         export = self.make_log(snapped_time=snapped_time, manual=manual)
-        
         opr.save_json(
             is_from="ScreenMonitor",
             path=self._file_dir,
-            filename=f"ScreenMonitor{snapped_time.date().isoformat()}.json",
+            filename=f"ScreenMonitor - Saved on {snapped_time.strftime('%Y-%m-%d at %H-%M-%S')}.json",
             dump=export
         )
 
@@ -210,8 +209,8 @@ class Mister_Monitor:
 
     
     def open_report(self, open_json: bool = True):
-        try:            
-            if len(self._applications) > 0 and self._is_running:
+        try:        
+            if len(self._applications) > 0:
                 self.save_log(datetime.datetime.now(), manual=True)
             else:
                 print("No data to save, skipping...")
@@ -238,6 +237,7 @@ class Mister_Monitor:
                 return json.load(f)
 
     def open_directory(self) -> None:
+        
         path = self._file_dir
         if os.path.exists(path):
             os.startfile(path)
@@ -246,7 +246,7 @@ class Mister_Monitor:
         self._is_running = True
         exception_count = 0
         self._start_time = datetime.datetime.now()
-        print(f"Iterator: {as_iterator} | Start time: {self._start_time}")
+        print(f"Iterator: {as_iterator} | Start time: {self._start_time} | Running: {self._is_running}")
         while not self._stop_event.is_set():
             try:
                 # opr.wipe(False)

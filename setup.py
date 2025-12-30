@@ -11,7 +11,6 @@ setup(
     install_requires=[
         "OperaPowerRelay @ git+https://github.com/OperavonderVollmer/OperaPowerRelay.git",
         "PluginTemplate @ git+https://github.com/OperavonderVollmer/PluginTemplate.git",
-        "TrayIcon @ git+https://github.com/OperavonderVollmer/TrayIcon.git",
         "pywin32",
         "psutil",
         "pillow",
@@ -24,3 +23,5 @@ setup(
     url="https://github.com/OperavonderVollmer/ScreenMonitor", 
     license="MIT",
 )
+
+
