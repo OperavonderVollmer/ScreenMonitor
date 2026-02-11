@@ -20,7 +20,7 @@ root = os.path.dirname(os.path.abspath(__file__))
 if root not in sys.path:
     sys.path.insert(0, root)
 
-import  DataClasses
+import ScreenMonitorDataClasses
 
 import winotify
 import os
@@ -32,7 +32,7 @@ import win32con
 
 
 
-def list_current_applications() -> tuple[bool, list[DataClasses.Application_Info]]:
+def list_current_applications() -> tuple[bool, list[ScreenMonitorDataClasses.Application_Info]]:
 
     if PLATFORM == "Windows":
         return True, windows_get_applications()
@@ -174,7 +174,7 @@ def _window_callback(hwnd, context):
         )
 
 
-def windows_get_applications() -> list[DataClasses.Application_Info]:
+def windows_get_applications() -> list[ScreenMonitorDataClasses.Application_Info]:
     """Return only applications equivalent to Task Manager’s 'Apps' section."""
     active_hwnd = win32gui.GetForegroundWindow()
     results: list[tuple[str, str, int, bool]] = []
@@ -182,7 +182,7 @@ def windows_get_applications() -> list[DataClasses.Application_Info]:
     win32gui.EnumWindows(_window_callback, [active_hwnd, results])
 
     return [
-        DataClasses.Application_Info(
+        ScreenMonitorDataClasses.Application_Info(
             name=title,
             exe_name=exe_name,
             process_id=pid,
@@ -196,7 +196,7 @@ INTERVAL: int = 0
 FILEDIR: str = os.path.join(opr.get_special_folder_path("Documents"), "Opera Tools", "ScreenMonitor")
 IS_MODULE: bool = False
 PLATFORM: str = "Windows"
-MONITOR: DataClasses.Mister_Monitor | None = None
+MONITOR: ScreenMonitorDataClasses.Mister_Monitor | None = None
 STOP_SIGNAL = threading.Event()
 
 def stop() -> None:
@@ -208,7 +208,7 @@ def stop() -> None:
 
 
 
-def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None | DataClasses.Mister_Monitor:
+def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None | ScreenMonitorDataClasses.Mister_Monitor:
     """
     Parameters
     ===========
@@ -245,9 +245,9 @@ def main(interval: int = 0, filedir: str = "", is_module: bool = False) -> None 
     PLATFORM = platform.system()
 
     if is_module:
-        return DataClasses.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
+        return ScreenMonitorDataClasses.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
     
-    MONITOR = DataClasses.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
+    MONITOR = ScreenMonitorDataClasses.Mister_Monitor(interval=INTERVAL, list_current_applications=list_current_applications, stop_signal=STOP_SIGNAL, file_dir=FILEDIR)
     MONITOR.start()
     
     trayicon = TrayIcon.get_tray_icon(name="ScreenMonitor", icon=os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ScreenMonitor_logo.ico"), menu_callback=MONITOR.menu_callback, closing_callback=stop)
