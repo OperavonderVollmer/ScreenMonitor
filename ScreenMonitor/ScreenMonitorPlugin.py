@@ -389,10 +389,10 @@ class plugin(PluginTemplate.ophelia_plugin):
    
     def input_scheme(self, root = None, form = True, serialize: bool = True):
         scheme = super().input_scheme(root= DSL.JS_Div(
-                id="ScreenMonitor",
+                id="screenmonitor-div",
                 children=[
                     DSL.JS_Select(
-                        id="command",
+                        id="screenmonitor-select",
                         label="Select an option",
                         options= ["START", "STOP", "REPORT", "DIRECTORY"],
                     )
