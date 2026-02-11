@@ -185,6 +185,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                     header_level=4,
                     child=DSL.JS_Label(
                         id=f"Top5_App_{i}_Time",
+                        classes="whiteText",
                         text=opr.clean_time(datetime.timedelta(seconds=app["time_seconds"]))
                     )
                 )
@@ -199,6 +200,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                     header_level=4,
                     child=DSL.JS_Label(
                         id=f"Entries_App_{i}_Time",
+                        classes="whiteText",
                         text=opr.clean_time(datetime.timedelta(seconds=app["time_seconds"]))
                     )
                 )
@@ -218,6 +220,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                         header_level=2,
                         child=DSL.JS_Label(
                             id="ScreenMonitor_TotalTime_Text",
+                            classes="whiteText",
                             text=opr.clean_time(datetime.timedelta(seconds=report["meta"]["total_time_seconds"])),
                         )
                     ),
@@ -232,7 +235,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                                 div_classes="divCentered",
                                 child=DSL.JS_Label(
                                     id="ScreenMonitor_MostActive_App_Text",
-                                    classes="noInputFieldDefaults",
+                                    classes="noInputFieldDefaults whiteText",
                                     text=report["meta"]["most_active"]["name"],
                                 )
                             ),
@@ -243,7 +246,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                                 div_classes="divCentered",
                                 child=DSL.JS_Label(
                                     id="ScreenMonitor_MostActive_Time_Text",
-                                    classes="noInputFieldDefaults",
+                                    classes="noInputFieldDefaults whiteText",
                                     text=opr.clean_time(datetime.timedelta(seconds=report["meta"]["most_active"]["time_seconds"])),
                                 )
                             ),
@@ -254,7 +257,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                                 div_classes="divCentered",
                                 child=DSL.JS_Label(
                                     id="ScreenMonitor_MostActive_FocusedTime_Text",
-                                    classes="noInputFieldDefaults",
+                                    classes="noInputFieldDefaults whiteText",
                                     text=f"{opr.clean_time(datetime.timedelta(seconds=report['meta']['most_active']['focused_seconds']))} ({report['meta']['most_active']['focus_ratio']*100:.2f}%)"
                                 )
                             ),
@@ -393,7 +396,7 @@ class plugin(PluginTemplate.ophelia_plugin):
                 children=[
                     DSL.JS_Select(
                         id="screenmonitor-select",
-                        label="Select an option",
+                        label="Select an option",      
                         options= ["START", "STOP", "REPORT", "DIRECTORY"],
                     )
                 ]
@@ -403,6 +406,8 @@ class plugin(PluginTemplate.ophelia_plugin):
     def execute(self, **kwargs):
         if kwargs.get("command", None):
             return self.direct_execute(kwargs["command"])
+        elif kwargs.get("screenmonitor-select", None):
+            return self.direct_execute(kwargs["screenmonitor-select"])        
         elif kwargs.get("generic_input", None):
             return self.direct_execute(kwargs["generic_input"])
         else:
